@@ -9,7 +9,7 @@
 
 // Global Vars
 Architecture <- _T("pdk14");  // The chosen architecture
-ArchitectureIndex <- 0;       // The architecture as integer
+ArchitectureIndex <- 1;       // The architecture as integer
 IntelHex <- true;             // produce Intel Hex file?
 
 function BeginWizard()
@@ -106,11 +106,19 @@ function SetupProject(project)
         // Project linker options
         switch (ArchitectureIndex) {
             case 0:
-               project.AddLinkLib(_T("pdk14"));
+               project.AddLinkLib(_T("pdk13"));
                break;
 
             case 1:
+               project.AddLinkLib(_T("pdk14"));
+               break;
+
+            case 2:
                project.AddLinkLib(_T("pdk15"));
+               break;
+
+            case 3:
+               project.AddLinkLib(_T("pdk16"));
                break;
 
             default:
