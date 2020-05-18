@@ -25,7 +25,7 @@ function BeginWizard()
         Wizard.AddInfoPage(_T("PadaukIntro"), intro_msg);
         Wizard.AddProjectPathPage();
         Wizard.AddPage(_T("architectureChoice"));
-        Wizard.AddCompilerPage(_T("SDCC Compiler"), _T("sdcc*;keil*;iar8051"), true, true);
+        Wizard.AddCompilerPage(_T("SDCC Compiler"), _T("sdcc*"), true, true);
     }
     else
         print(wiz_type);
