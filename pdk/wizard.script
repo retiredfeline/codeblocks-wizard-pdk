@@ -117,10 +117,6 @@ function SetupProject(project)
                project.AddLinkLib(_T("pdk15"));
                break;
 
-            case 3:
-               project.AddLinkLib(_T("pdk16"));
-               break;
-
             default:
                break;
 
