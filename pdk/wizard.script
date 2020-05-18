@@ -1,0 +1,155 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// Code::Blocks new project wizard script
+//
+// Project: Padauk project
+// Author:  Ken Yap
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// Global Vars
+Architecture <- _T("pdk14");  // The chosen architecture
+ArchitectureIndex <- 0;       // The architecture as integer
+IntelHex <- true;             // produce Intel Hex file?
+
+function BeginWizard()
+{
+    local wiz_type = Wizard.GetWizardType();
+
+    if (wiz_type == wizProject)
+    {
+        local intro_msg = _T("Welcome to the Padauk project wizard!\n" +
+                             "This wizard will guide you to create a new Padauk project.\n\n" +
+                             "When you 're ready to proceed, please click \"Next\"...");
+
+        Wizard.AddInfoPage(_T("PadaukIntro"), intro_msg);
+        Wizard.AddProjectPathPage();
+        Wizard.AddCompilerPage(_T("SDCC Compiler"), _T("sdcc*;keil*;iar8051"), true, true);
+        Wizard.AddPage(_T("architectureChoice"));
+    }
+    else
+        print(wiz_type);
+}
+
+function GetGeneratedFile(file_index)
+{
+    if (file_index == 0)
+    {
+        local path    = Wizard.FindTemplateFile(_T("pdk/files/main.c"));
+        local buffer  = IO.ReadFileContents(path);
+        return _T("main.c;") + buffer;
+    }
+    return _T(""); // no other files
+}
+
+function GetFilesDir()
+{
+    local result = _T(""); // file is generated
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Architecture choice page
+////////////////////////////////////////////////////////////////////////////////
+
+function OnEnter_architectureChoice(fwd)
+{
+    if (fwd)
+    {
+        Wizard.SetComboboxSelection(_T("comboboxArch"), ConfigManager.Read(_T("/pdk_project_wizard/architecture"), 0));
+        if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("sdcc*")))
+        {
+            Wizard.EnableWindow(_T("radioboxOutput"), true);
+        }
+        else
+        {
+            Wizard.EnableWindow(_T("radioboxOutput"), false);
+        }
+    }
+    return true;
+}
+
+function OnLeave_architectureChoice(fwd)
+{
+    if (fwd)
+    {
+        Architecture = Wizard.GetComboboxStringSelection(_T("comboboxArch"));
+        ArchitectureIndex = Wizard.GetComboboxSelection(_T("comboboxArch"));
+        if ( Wizard.GetRadioboxSelection(_T("radioboxOutput")) == 1 )
+        {
+            IntelHex = false;
+        }
+        ConfigManager.Write(_T("/pdk_project_wizard/architecture"), ArchitectureIndex);
+    }
+    return true;
+}
+
+function SetupProject(project)
+{
+    //Variables
+    local out_ext = ::wxString();
+
+    if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("sdcc*")))
+    {
+        // Post Build steps
+        local pb_hex = ::wxString();
+
+        // Post build commands
+        if (PLATFORM_MSW == PLATFORM)
+            pb_hex = _T("cmd /c \"packihx <$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).ihx >$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).hex\"");
+        else
+            pb_hex = _T("packihx <$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).ihx >$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).hex");
+
+        // Project compiler options
+        project.AddCompilerOption(_T("-m") + Architecture);
+
+        // Project linker options
+        switch (ArchitectureIndex) {
+            case 0:
+               project.AddLinkLib(_T("pdk14"));
+               break;
+
+            case 1:
+               project.AddLinkLib(_T("pdk15"));
+               break;
+
+            default:
+               break;
+
+        }
+
+        // Project post-build steps
+        if (IntelHex)
+        {
+            project.AddCommandsAfterBuild(pb_hex);
+            out_ext = _T(".ihx");
+        }
+        else
+        {
+            project.AddLinkerOption(_T("--out-fmt-elf"));
+            out_ext = _T(".elf");
+        }
+    }
+
+    // Debug build target
+    local target = project.GetBuildTarget(Wizard.GetDebugName());
+    if (!IsNull(target))
+    {
+        target.SetTargetType(ttNative);
+        target.SetTargetFilenameGenerationPolicy(tgfpPlatformDefault, tgfpNone);
+        target.SetOutputFilename(Wizard.GetDebugOutputDir() + Wizard.GetProjectName() + out_ext);
+        DebugSymbolsOn(target, Wizard.GetCompilerID());
+    }
+
+    // Release build target
+    target = project.GetBuildTarget(Wizard.GetReleaseName());
+    if (!IsNull(target))
+    {
+        target.SetTargetType(ttNative);
+        target.SetTargetFilenameGenerationPolicy(tgfpPlatformDefault, tgfpNone);
+        target.SetOutputFilename(Wizard.GetReleaseOutputDir() + Wizard.GetProjectName() + out_ext);
+        OptimizationsOn(target, Wizard.GetCompilerID());
+    }
+
+    return true;
+}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxPanel" name="architectureChoice">
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<object class="wxStaticText" name="textChoice">
+					<label>Please choose an architecture for this project...</label>
+				</object>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>3</border>
+			</object>
+			<object class="sizeritem">
+				<object class="wxComboBox" name="comboboxArch">
+					<content>
+						<item>pdk14</item>
+						<item>pdk15</item>
+					</content>
+				</object>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>3</border>
+			</object>
+		</object>
+	</object>
+</resource>
